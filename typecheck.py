@@ -3,39 +3,60 @@ import re
 from types import CodeType, ModuleType
 
 
-def extend_function(func, code, position='start'):
+_FUNC_SIGNATURE_REGEX = r'def (\w+)\s*\(((\s|.)*?)\)\s*:'
+_INDENT_STRING = '    '
+
+
+def extend_function(func, added_code, position='start'):
     if position.lower() not in {'start', 'end'}:
-        raise ValueError('Position must be start or end')
+        raise ValueError('Position must be \'start\' or \'end\'')
 
-    source = inspect.getsource(func)
+    func_source = inspect.getsource(func)
+    source_unindented = _unindent_source(func_source)
 
-    matches = re.search(r'def (\w+)\s*\(((\s|.)*?)\)\s*:', source)
-    func_signature_start_index = matches.start()
-    func_signature_end_index = matches.end()
+    unindented_sig_regex = re.search(_FUNC_SIGNATURE_REGEX, source_unindented)
 
-    try:
-        index_newline_before_def = source[:func_signature_start_index].rindex('\n')
-    except ValueError:  # not found
-        index_newline_before_def = func_signature_start_index
-    indentation = (func_signature_start_index - index_newline_before_def) * '    '
+    # added code will always have an indentation level of 1 - immediately under the function
+    added_code_indented = _INDENT_STRING + ('\n' + _INDENT_STRING).join(added_code.split('\n'))
 
-    code_with_indent = ('\n' + indentation).join(code.split('\n'))
-    complete_source = source[:func_signature_end_index] + '\n' + indentation + code_with_indent + source[func_signature_end_index:]
+    func_signature = source_unindented[:unindented_sig_regex.end()]
+    original_body = source_unindented[unindented_sig_regex.end():]
 
-    print(complete_source)
-    print("*"*40)
+    modified_source = func_signature \
+                      + '\n' \
+                      + added_code_indented \
+                      + original_body
 
-    m = ModuleType('m')
-    exec(complete_source, m.__dict__)
+    print(modified_source)
+
+    m = ModuleType('_internal_')
+    exec(modified_source, m.__dict__)
 
     func.__code__ = getattr(m, f.__name__).__code__
     func(1, 2, 3)
 
 
+def _unindent_source(func_source):
+    signature_regex = re.search(_FUNC_SIGNATURE_REGEX, func_source)
+    func_sig_start_index = signature_regex.start()
+
+    source_before_sig = func_source[:func_sig_start_index]
+    if not all(s == ' ' for s in source_before_sig):
+        raise RuntimeError('All of the text before the function signature should be whitespace.')
+    func_indent_level = int(len(source_before_sig) / len(_INDENT_STRING))  # int to indicate level of indentation
+    after_indent_index = func_indent_level * len(_INDENT_STRING)
+    source_unindented_lines = []
+    for line in func_source.splitlines():
+        unindented = line[after_indent_index:]
+        source_unindented_lines.append(unindented)
+    source_unindented = '\n'.join(source_unindented_lines)
+    return source_unindented
+
+
+
+
 if __name__ == '__main__':
-    def f(
-            a, b
-            , c):
+    def f(a, b, c):
         print("in func")
 
 
