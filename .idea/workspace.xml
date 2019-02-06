@@ -35,13 +35,14 @@
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="dummy" value="6" />
-          <entry key="py" value="4952" />
+          <entry key="py" value="5417" />
+          <entry key="txt" value="40" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="PLAIN_TEXT" value="6" />
-          <entry key="Python" value="4951" />
+          <entry key="PLAIN_TEXT" value="46" />
+          <entry key="Python" value="5416" />
           <entry key="RegExp" value="1" />
         </counts>
       </usages-collector>
@@ -52,12 +53,12 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/typecheck.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="300">
-              <caret line="15" lean-forward="true" selection-start-line="15" selection-end-line="15" />
+            <state relative-caret-position="648">
+              <caret line="62" lean-forward="true" selection-start-line="62" selection-end-line="62" />
               <folding>
                 <element signature="e#0#14#0" expanded="true" />
-                <marker date="1549479804215" expanded="true" signature="149:150" ph="..." />
-                <marker date="1549479804215" expanded="true" signature="1419:1428" ph="..." />
+                <marker date="1549480491369" expanded="true" signature="149:150" ph="..." />
+                <marker date="1549480491369" expanded="true" signature="1552:1561" ph="..." />
               </folding>
             </state>
           </provider>
@@ -174,6 +175,14 @@
       <option name="presentableId" value="Default" />
       <updated>1549308331371</updated>
     </task>
+    <task id="LOCAL-00001" summary="Seems to work 8)">
+      <created>1549479943114</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1549479943114</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TodoView">
@@ -195,7 +204,7 @@
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32908458" />
       <window_info anchor="bottom" id="Run" order="2" weight="0.59456396" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.63646656" />
+      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.041902605" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.3295583" />
@@ -230,18 +239,17 @@
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Seems to work 8)" />
+    <option name="LAST_COMMIT_MESSAGE" value="Seems to work 8)" />
+  </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/typecheck.py</url>
-          <line>31</line>
+          <line>34</line>
           <option name="timeStamp" value="12" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/typecheck.py</url>
-          <line>21</line>
-          <option name="timeStamp" value="14" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -333,12 +341,12 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/typecheck.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="15" lean-forward="true" selection-start-line="15" selection-end-line="15" />
+        <state relative-caret-position="648">
+          <caret line="62" lean-forward="true" selection-start-line="62" selection-end-line="62" />
           <folding>
             <element signature="e#0#14#0" expanded="true" />
-            <marker date="1549479804215" expanded="true" signature="149:150" ph="..." />
-            <marker date="1549479804215" expanded="true" signature="1419:1428" ph="..." />
+            <marker date="1549480491369" expanded="true" signature="149:150" ph="..." />
+            <marker date="1549480491369" expanded="true" signature="1552:1561" ph="..." />
           </folding>
         </state>
       </provider>

@@ -1,15 +1,15 @@
 import inspect
 import re
-from types import CodeType, ModuleType
 
+from types import CodeType, ModuleType
 
 _FUNC_SIGNATURE_REGEX = r'def (\w+)\s*\(((\s|.)*?)\)\s*:'
 _INDENT_STRING = '    '
 
 
-def extend_function(func, added_code, position='start'):
-    if position.lower() not in {'start', 'end'}:
-        raise ValueError('Position must be \'start\' or \'end\'')
+def extend_function(func, start='', end=''):
+    if not start and not end:
+        raise ValueError('Must supply code for at least one of "start" or "end" arguments.')
 
     func_source = inspect.getsource(func)
     source_unindented = _unindent_source(func_source)
@@ -17,15 +17,18 @@ def extend_function(func, added_code, position='start'):
     unindented_sig_regex = re.search(_FUNC_SIGNATURE_REGEX, source_unindented)
 
     # added code will always have an indentation level of 1 - immediately under the function
-    added_code_indented = _INDENT_STRING + ('\n' + _INDENT_STRING).join(added_code.split('\n'))
+    start_indented = _INDENT_STRING + ('\n' + _INDENT_STRING).join(start.split('\n'))
+    end_indented = _INDENT_STRING + ('\n' + _INDENT_STRING).join(end.split('\n'))
 
     func_signature = source_unindented[:unindented_sig_regex.end()]
     original_body = source_unindented[unindented_sig_regex.end():]
 
     modified_source = func_signature \
                       + '\n' \
-                      + added_code_indented \
-                      + original_body
+                      + start_indented \
+                      + original_body \
+                      + '\n' \
+                      + end_indented
 
     print(modified_source)
 
@@ -53,11 +56,8 @@ def _unindent_source(func_source):
     return source_unindented
 
 
-
-
 if __name__ == '__main__':
     def f(a, b, c):
         print("in func")
 
-
-    extend_function(f, 'print("this is added!")\nprint("also this")', position='end')
+    extend_function(f, start='if not isinstance(a, str): raise TypeError()')
