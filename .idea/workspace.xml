@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="ef45ad4f-a635-4e7d-99ae-ce9ee4851973" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/typecheck.py" beforeDir="false" afterPath="$PROJECT_DIR$/typecheck.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -24,25 +23,25 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="py" value="15" />
+          <entry key="py" value="16" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
-          <entry key="Python" value="15" />
+          <entry key="Python" value="16" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="dummy" value="6" />
-          <entry key="py" value="7332" />
+          <entry key="py" value="7425" />
           <entry key="txt" value="40" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="PLAIN_TEXT" value="46" />
-          <entry key="Python" value="7331" />
+          <entry key="Python" value="7424" />
           <entry key="RegExp" value="1" />
         </counts>
       </usages-collector>
@@ -53,11 +52,10 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/typecheck.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="625">
-              <caret line="99" selection-start-line="99" selection-end-line="99" />
+            <state relative-caret-position="605">
+              <caret line="102" lean-forward="true" selection-start-line="102" selection-end-line="102" />
               <folding>
                 <element signature="e#0#14#0" expanded="true" />
-                <marker date="1549491471909" expanded="true" signature="3794:3798" ph="..." />
               </folding>
             </state>
           </provider>
@@ -207,12 +205,12 @@
     <frame x="-9" y="-9" width="1938" height="1050" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" weight="0.15230037" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.09613319" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32842582" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.5639864" />
+      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.0" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.49946293" weight="0.5175538" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -352,13 +350,15 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/try.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
     <entry file="file://$PROJECT_DIR$/typecheck.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="625">
-          <caret line="99" selection-start-line="99" selection-end-line="99" />
+        <state relative-caret-position="605">
+          <caret line="102" lean-forward="true" selection-start-line="102" selection-end-line="102" />
           <folding>
             <element signature="e#0#14#0" expanded="true" />
-            <marker date="1549491471909" expanded="true" signature="3794:3798" ph="..." />
           </folding>
         </state>
       </provider>

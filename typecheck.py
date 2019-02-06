@@ -34,10 +34,10 @@ def extend_function(func, start='', end='', indent=0):
 
     print(modified_source)
 
-    m = ModuleType('_internal_')
-    exec(modified_source, m.__dict__)
+    throwaway_module = ModuleType('_internal_')
+    exec(modified_source, throwaway_module.__dict__)
 
-    func.__code__ = getattr(m, f.__name__).__code__
+    func.__code__ = getattr(throwaway_module, func.__name__).__code__
 
 
 def get_function_source(func):
@@ -89,7 +89,7 @@ def typecheck(f):
     check_lines = []
     for arg_name, arg_type in f.__annotations__.items():
         check_lines.append('if not isinstance({arg_name}, {arg_type}): '
-                           'raise TypeError("{arg_name} must be of type {arg_type}. Was of type: {{actual_type}}".format(actual_type=type({arg_name}))'
+                           'raise TypeError("{arg_name} must be of type {arg_type}. Was of type: {{actual_type}}".format(actual_type=type({arg_name})))'
                            .format(arg_name=arg_name, arg_type=arg_type.__name__))
     checks = '\n'.join(check_lines)
     extend_function(f, start=checks)
@@ -97,8 +97,11 @@ def typecheck(f):
 
 
 if __name__ == '__main__':
+
     def f(a, b, c: int):
         print("in func")
 
-    extend_function(f, start='for i in range(5):', end='print("finished looping")', indent=1)
-    f(1, 2, 3)
+    f(1, 2, 'a')
+    # extend_function(f, start='for i in range(5):', end='print("finished looping")', indent=1)
+    # f(1, 2, 3)
+
