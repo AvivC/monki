@@ -7,7 +7,7 @@ _FUNC_SIGNATURE_REGEX = r'def (\w+)\s*\(((\s|.)*?)\)\s*:'
 _INDENT_STRING = '    '
 
 
-def extend_function(func, start='', end=''):
+def extend_function(func, start='', end='', indent=0):
     if not start and not end:
         raise ValueError('Must supply code for at least one of "start" or "end" arguments.')
 
@@ -23,10 +23,12 @@ def extend_function(func, start='', end=''):
     func_signature = source_unindented[:unindented_sig_regex.end()]
     original_body = source_unindented[unindented_sig_regex.end():]
 
+    original_body_indented = _indent_lines(original_body, indent, _INDENT_STRING)
+
     modified_source = func_signature \
                       + '\n' \
                       + start_indented \
-                      + original_body \
+                      + original_body_indented \
                       + '\n' \
                       + end_indented
 
@@ -37,6 +39,11 @@ def extend_function(func, start='', end=''):
 
     func.__code__ = getattr(m, f.__name__).__code__
     func(1, 2, 3)
+
+
+def _indent_lines(code, indent_level, indent_string):
+    relative_indent_string = indent_level * indent_string
+    return relative_indent_string + ('\n' + relative_indent_string).join(code.splitlines())
 
 
 def _unindent_source(func_source):
@@ -60,4 +67,4 @@ if __name__ == '__main__':
     def f(a, b, c):
         print("in func")
 
-    extend_function(f, start='if not isinstance(a, str): raise TypeError()')
+    extend_function(f, start='try:', end="except: pass", indent=1)
