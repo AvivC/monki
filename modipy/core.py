@@ -4,6 +4,7 @@ import re
 from types import CodeType, ModuleType
 import inspect
 
+
 _FUNC_SIGNATURE_REGEX = r'def (\w+)\s*\(((\s|.)*?)\)\s*:'
 _INDENT_STRING = '    '
 

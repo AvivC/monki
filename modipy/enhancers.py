@@ -1,3 +1,5 @@
+import inspect
+
 from . import core
 
 
@@ -21,3 +23,32 @@ def typecheck(func):
 
     core.extend_function(func, start=checks)
     return func
+
+
+def ignoreerror(error):
+    code_for_error = _error_to_python_code(error)
+
+    def dec(func):
+        core.extend_function(func,
+                             start='try:',
+                             end='except {error}: pass'.format(error=code_for_error), indent_inner=1)
+        return func
+
+    return dec
+
+
+def _error_to_python_code(error):
+    is_exception_class = inspect.isclass(error) and issubclass(error, Exception)
+    no_args_to_decorator = callable(error) and not is_exception_class
+    if no_args_to_decorator:
+        return Exception.__name__  # the default exception class
+
+    elif issubclass(error, Exception):
+        return error.__name__
+
+    # got tuple of exceptions
+    elif isinstance(error, tuple) and all(isinstance(o, Exception) for o in error):
+        return '(' + ','.join(error) + ')'
+
+    else:
+        raise TypeError('Error must be an Exception class or a tuple of Exception classes.')
