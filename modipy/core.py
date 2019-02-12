@@ -1,8 +1,12 @@
 import itertools
 import re
+import types
 
 from types import CodeType, ModuleType
 import inspect
+
+
+from modipy.enhancers import typecheck, ignoreerror
 
 
 _FUNC_SIGNATURE_REGEX = r'def (\w+)\s*\(((\s|.)*?)\)\s*:'
@@ -15,9 +19,41 @@ def extend_function(func, start='', end='', indent_inner=0):
 
 
 def _replace_code(func, modified_source):
+    modified_function = _create_modified_function(func, modified_source)
+    modified_code_object = modified_function.__code__
+    func.__code__ = modified_code_object
+
+
+def _create_modified_function(func, modified_source):
     throwaway_module = ModuleType('_internal_')
-    exec(modified_source, throwaway_module.__dict__)
-    func.__code__ = getattr(throwaway_module, func.__name__).__code__
+
+    is_closure = func.__closure__ is not None
+    if is_closure:
+        func_freevars = func.__code__.co_freevars
+        freevars_declarations = '\n    '.join('{} = None'.format(varname) for varname in func_freevars)
+
+        closure_signature, closure_body = _divide_source(modified_source)
+        closure_body = _indent_lines(closure_body, indent_level=1, indent_string=_INDENT_STRING)
+        closure_source = closure_signature + closure_body
+
+        wrapper_name = '_wrapper'
+        wrapper_source = \
+            """def {wrapper_name}():\n    {freevars_declarations}\n    {closure_source}\n    return {func_name}""".format(
+                freevars_declarations=freevars_declarations,
+                closure_source=closure_source,
+                func_name=func.__name__,
+                wrapper_name=wrapper_name)
+
+        print(wrapper_source)
+        exec(wrapper_source, throwaway_module.__dict__)
+        wrapper_func = getattr(throwaway_module, wrapper_name)
+        modified_function = wrapper_func()
+
+    else:
+        exec(modified_source, throwaway_module.__dict__)
+        modified_function = getattr(throwaway_module, func.__name__)
+
+    return modified_function
 
 
 def _modify_source(func, start='', end='', indent=0):
@@ -29,7 +65,7 @@ def _modify_source(func, start='', end='', indent=0):
     func_signature, func_body = _divide_source(func_source)
 
     if indent:
-        func_body = _indent_original_body(func_body, indent, _INDENT_STRING)
+        func_body = _indent_lines(func_body, indent, _INDENT_STRING)
 
     modified_source = func_signature \
                       + start_indented \
@@ -82,7 +118,7 @@ def _process_function_source(func):
     return func_source
 
 
-def _indent_original_body(code, indent_level, indent_string):
+def _indent_lines(code, indent_level, indent_string):
     relative_indent_string = indent_level * indent_string
     return relative_indent_string + ('\n' + relative_indent_string).join(code.splitlines())
 
@@ -122,12 +158,14 @@ def _strip_leading_decorators(source_unindented):
 
 
 if __name__ == '__main__':
+    def f():
+        a = 8
+        def g():
+            print(a)
+        return g
 
-    def p():
-        print('Suppp')
+    g = f()
+    extend_function(g, start='print()')
+    g()
 
-    def x():
-        p()
 
-    extend_function(x, start='print()')
-    x()

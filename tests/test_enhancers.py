@@ -47,11 +47,8 @@ def test_ignoreerror_when_subclass_is_raised():
     class MyError(RuntimeError):
         pass
 
-    aaa = 'x'
-
     @ignoreerror(RuntimeError)
     def func():
-        print(aaa)
-        raise RuntimeError('The world is ending!')
+        raise MyError('The world is ending!')
 
     func()  # the MyError should be caught

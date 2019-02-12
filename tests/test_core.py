@@ -49,3 +49,37 @@ def test_passing_no_start_or_end_raises_exception():
     with pytest.raises(ValueError) as ex:
         modipy.extend_function(func)
     assert 'Must supply code for at least one of "start" or "end" arguments.' in str(ex)
+
+
+def test_processing_closure_function_no_args():
+    def outer_function():
+        some_list = [1, 2, 3]
+        some_string = 'things'
+
+        def my_closure():
+            some_list.append(some_string)
+            return some_list[-1]
+
+        return my_closure
+
+    closure = outer_function()
+    modipy.extend_function(closure, start='print("Beginning")', end='print("Ending")')
+    assert closure() == 'things'
+
+
+def test_inner_indentation_in_closure():
+    def outer_function():
+        out_list = ['things']
+        some_string = 'things'
+
+        def my_closure():
+            out_list.append(some_string)
+
+        return my_closure, out_list
+
+    closure, out_list = outer_function()
+    modipy.extend_function(closure, start='for i in range(5):', indent_inner=1)
+    closure()
+    assert out_list == ['things'] * 6
+
+
