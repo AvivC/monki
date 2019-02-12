@@ -83,3 +83,56 @@ def test_inner_indentation_in_closure():
     assert out_list == ['things'] * 6
 
 
+def test_closures_that_originally_set_outer_names():
+    def outer_function():
+        a = 'outer_a'
+        b = 'outer_b'
+
+        def my_closure():
+            a = 'inner_a'
+            return a, b
+
+        return my_closure
+
+    closure = outer_function()
+    modipy.extend_function(closure, start='pass')
+    a, b = closure()
+    assert a == 'inner_a'
+    assert b == 'outer_b'
+
+
+def test_extending_closure_with_setting_free_variable_raises_unsupported_exception():
+    def outer_function():
+        a = 'outer_a'
+        b = 'outer_b'
+
+        def my_closure():
+            return a, b
+
+        return my_closure
+
+    closure = outer_function()
+
+    with pytest.raises(ValueError) as exc:
+        modipy.extend_function(closure, start='a = "inner_a"')
+    assert 'Setting variables from outer function in extension - currently not supported.' in str(exc)
+
+
+def test_correct_indent_inner_parameter_options():
+    for indent_option in {True, 1, 2, 10}:
+        def func(outlist):
+            outlist.append('in loop')
+
+        modipy.extend_function(func, start='for i in range(5): ', indent_inner=indent_option)
+        outlist = []
+        func(outlist)
+        assert outlist == ['in loop'] * 5
+
+
+def test_incorrect_indentation_raises_error():
+    def func(outlist):
+        outlist.append('in loop')
+
+    with pytest.raises(ValueError) as exc:
+        modipy.extend_function(func, start='for i in range(5): ', indent_inner=False)
+    assert 'There\'s a problem with the indentation.' in str(exc)

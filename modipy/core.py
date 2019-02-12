@@ -6,14 +6,16 @@ from types import CodeType, ModuleType
 import inspect
 
 
-from modipy.enhancers import typecheck, ignoreerror
-
-
 _FUNC_SIGNATURE_REGEX = r'def (\w+)\s*\(((\s|.)*?)\)\s*:'
 _INDENT_STRING = '    '
 
 
-def extend_function(func, start='', end='', indent_inner=0):
+def extend_function(func, start='', end='', indent_inner=False):
+    if indent_inner is True:
+        indent_inner = 1
+    elif indent_inner is False:
+        indent_inner = 0
+
     modified_source = _modify_source(func, start, end, indent_inner)
     _replace_code(func, modified_source)
 
@@ -21,7 +23,13 @@ def extend_function(func, start='', end='', indent_inner=0):
 def _replace_code(func, modified_source):
     modified_function = _create_modified_function(func, modified_source)
     modified_code_object = modified_function.__code__
-    func.__code__ = modified_code_object
+    try:
+        func.__code__ = modified_code_object
+    except ValueError as e:
+        if 'requires a code object with' in str(e).lower():  # making sure it's the right exception
+            raise ValueError('Setting variables from outer function in extension - currently not supported.') from e
+        else:
+            raise
 
 
 def _create_modified_function(func, modified_source):
@@ -29,31 +37,43 @@ def _create_modified_function(func, modified_source):
 
     is_closure = func.__closure__ is not None
     if is_closure:
-        func_freevars = func.__code__.co_freevars
-        freevars_declarations = '\n    '.join('{} = None'.format(varname) for varname in func_freevars)
-
-        closure_signature, closure_body = _divide_source(modified_source)
-        closure_body = _indent_lines(closure_body, indent_level=1, indent_string=_INDENT_STRING)
-        closure_source = closure_signature + closure_body
-
-        wrapper_name = '_wrapper'
-        wrapper_source = \
-            """def {wrapper_name}():\n    {freevars_declarations}\n    {closure_source}\n    return {func_name}""".format(
-                freevars_declarations=freevars_declarations,
-                closure_source=closure_source,
-                func_name=func.__name__,
-                wrapper_name=wrapper_name)
-
-        print(wrapper_source)
-        exec(wrapper_source, throwaway_module.__dict__)
-        wrapper_func = getattr(throwaway_module, wrapper_name)
-        modified_function = wrapper_func()
+        modified_function = _modify_closure_function(func, modified_source, throwaway_module)
 
     else:
-        exec(modified_source, throwaway_module.__dict__)
+        _create_function_in_inner_module(modified_source, throwaway_module)
         modified_function = getattr(throwaway_module, func.__name__)
 
     return modified_function
+
+
+def _modify_closure_function(func, modified_source, throwaway_module):
+    func_freevars = func.__code__.co_freevars
+    freevars_declarations = '\n    '.join('{} = None'.format(varname) for varname in func_freevars)
+
+    closure_signature, closure_body = _divide_source(modified_source)
+    closure_body = _indent_lines(closure_body, indent_level=1, indent_string=_INDENT_STRING)
+    closure_source = closure_signature + closure_body
+
+    wrapper_name = '_wrapper'
+    wrapper_source = \
+        """def {wrapper_name}():\n    {freevars_declarations}\n    {closure_source}\n    return {func_name}""".format(
+            freevars_declarations=freevars_declarations,
+            closure_source=closure_source,
+            func_name=func.__name__,
+            wrapper_name=wrapper_name)
+
+    _create_function_in_inner_module(wrapper_source, throwaway_module)
+    wrapper_func = getattr(throwaway_module, wrapper_name)
+    modified_function = wrapper_func()
+
+    return modified_function
+
+
+def _create_function_in_inner_module(function_source, module):
+    try:
+        exec(function_source, module.__dict__)
+    except IndentationError as e:
+        raise ValueError('There\'s a problem with the indentation. Maybe forgot to set indent_inner?') from e
 
 
 def _modify_source(func, start='', end='', indent=0):

@@ -21,7 +21,12 @@ def test_typecheck_raises_error_on_incorrect_types():
     output = []
     with pytest.raises(TypeError) as exc:
         func('abc', 10, output, 'this should be a list')
-    assert "c must be of type list. Was of type: str" in str(exc)
+
+    # make sure errors were not raised for proper inputs
+    assert "a must be of type" not in str(exc)
+    assert "b must be of type" not in str(exc)
+    assert "output must be of" not in str(exc)
+
     assert output == []
 
 
