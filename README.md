@@ -31,7 +31,7 @@ Different ways to patch it:
 
     # Insert lines at any offset
     
-    monki.patch(func, insert={1: "print('Injected line')", 2: "print('Another injection')"})
+    monki.patch(func, insert_lines={1: "print('Injected line')", 2: "print('Another injection')"})
     func()
         >>> 'First'
         >>> 'Injected line'
@@ -42,7 +42,7 @@ Different ways to patch it:
     # Let's patch a loop inside the function!
     # To do so we need to insert the loop and indent a line to go inside it.
     
-    monki.patch(func, insert={1: "for i in range(3):"}, indent_lines=[1])
+    monki.patch(func, insert_lines={1: "for i in range(3):"}, indent_lines=[1])
     func()
         >>> 'First'
         >>> 'Second'

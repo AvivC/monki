@@ -13,42 +13,7 @@ def patch(func, start='', end='', insert_lines=None, indent_lines=None, indent_i
     Easily modify a function's code at runtime.
     Can be called at most once on a single function.
 
-    Consider we want to patch the following function:
-
-    def func():
-        print('First')   # line 0
-        print('Second')  # line 1
-        print('Third')   # line 2
-
-    Examples of different ways to patch it:
-
-        # Wrap the function with start and end code
-        monki.patch(func, start="print('Starting')", end="print('Ending')")
-        func()
-            >>> 'Starting'
-            >>> 'First'
-            >>> 'Second'
-            >>> 'Third'
-            >>> 'Ending'
-
-        # Inject lines at any offset
-        monki.patch(func, insert={1: "print('Injected line')", 2: "print('Another injection')"})
-        func()
-            >>> 'First'
-            >>> 'Injected line'
-            >>> 'Second'
-            >>> 'Another injection'
-            >>> 'Third'
-
-        # Indent existing lines. Let's use that along with injection in order to create a loop!
-        # This injects the `for` before line 1, and indents line 1 so it's inside the loop.
-        monki.patch(func, insert={1: "for i in range(3):"}, indent_lines=[1])
-        func()
-            >>> 'First'
-            >>> 'Second'
-            >>> 'Second'
-            >>> 'Second'
-            >>> 'Third'
+    Consult the documentation for usage examples.
 
     :param func: The function to patch.
     :param start: Code to inject in the beginning, right after the signature.
@@ -152,36 +117,33 @@ _SourceLine = collections.namedtuple('SourceLine', ['code', 'number'])
 
 
 def _modify_source(func, start, end, insert_lines, indent_inner, indent_lines):
-    if not any([start, end, insert_lines]):
+    if not any([start, end, insert_lines, indent_lines]):
         raise ValueError('Must supply code to inject or indent.')
 
-    func_source = _clean_function_source(func)
-
+    func_source = _get_function_source(func)
     func_signature, func_body_lines = _divide_source(func_source)
 
+    _put_wrappers_in_insert_lines(start, end, func_body_lines, insert_lines)
     if indent_inner:
         func_body_lines = _indent_source_lines(func_body_lines, indent_inner)
 
+    insert_lines = _indent_inserted_lines(insert_lines)
+    func_body = _process_body(insert_lines, func_body_lines, indent_lines)
+
+    modified_source = func_signature + func_body
+    return modified_source
+
+
+def _put_wrappers_in_insert_lines(start, end, func_body_lines, insert_lines):
     _validate_no_collisions_between_wrappers_and_inserts(end, func_body_lines, insert_lines, start)
 
     if start:
         insert_lines[0] = start
     if end:
         # if we want to add code at the end, we need a blank line to add the code _before_ of
-        # TODO: Tests seem to pass without this line - figure this out
-        # func_body += '\n\n'
-        # last_line_index = len(func_body.splitlines()) - 1
         last_line_index = len(func_body_lines)
         func_body_lines.append(_SourceLine('', last_line_index))
         insert_lines[last_line_index] = end
-
-    end, start, insert_lines = _indent_injected_code(end, start, insert_lines)
-    func_body = _process_body(insert_lines, func_body_lines, indent_lines)
-
-    # modified_source = func_signature + start + func_body + end
-    modified_source = func_signature + func_body
-
-    return modified_source
 
 
 def _indent_source_lines(func_body_lines, indent_level):
@@ -239,13 +201,11 @@ def _divide_source(func_source):
     # return func_signature, func_body
 
 
-def _indent_injected_code(end, start, insert_lines):
+def _indent_inserted_lines(insert_lines):
     # added code will always have an indentation level of 1 - immediately under the function
-    start_indented = _indent_code(start, indent_level=1)
-    end_indented = _indent_code(end, indent_level=1)
     insert_lines = {linenum: _indent_code(code, indent_level=1) for linenum, code in insert_lines.items()}
 
-    return end_indented, start_indented, insert_lines
+    return insert_lines
 
 
 # def _indent_line(code):
@@ -259,7 +219,7 @@ def _indent_injected_code(end, start, insert_lines):
 #     return start_indented
 
 
-def _clean_function_source(func):
+def _get_function_source(func):
     func_source = inspect.getsource(func)
     func_source = _unindent_source(func_source)
     func_source = _strip_leading_decorators(func_source)
