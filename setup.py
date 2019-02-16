@@ -1,21 +1,25 @@
-import setuptools
+import pathlib
+from setuptools import setup
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+HERE = pathlib.Path(__file__).parent
+README = (HERE / "README.md").read_text()
 
-setuptools.setup(
+setup(
     name="monki",
     version="0.1.0",
-    license='MIT',
+    description="Easily patch functions at runtime.",
+    long_description=README,
+    long_description_content_type="text/markdown",
+    url="https://github.com/avivc/monki",
     author="Aviv Cohn",
     author_email="avivcohn1@gmail.com",
-    description="Patch functions at runtime - super easily.",
-    long_description=long_description,
-    url="https://github.com/AvivC/monki",
-    packages=setuptools.find_packages(),
+    license="MIT",
     classifiers=[
-        "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ]
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+        "Operating System :: OS Independent"
+    ],
+    packages=["monki"],
+    include_package_data=True
 )

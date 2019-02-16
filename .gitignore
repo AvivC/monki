@@ -1,6 +1,9 @@
 .idea/
 venv/
+dist/
+*.egg-info/
 .cache/
 __pycache__/
 .pytest_cache/
 *.pyc
+monki.egg-info
