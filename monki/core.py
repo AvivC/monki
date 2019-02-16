@@ -146,12 +146,9 @@ def _create_function_in_inner_module(function_source, module):
         raise ValueError('There\'s a problem with the indentation. Maybe forgot to set indent_inner?') from e
 
 
-def _modify_source(func, start='', end='', before_lines=None, indent_inner=0, indent_lines=None):
+def _modify_source(func, start, end, before_lines, indent_inner, indent_lines):
     if not any([start, end, before_lines]):
         raise ValueError('Must supply code to inject or indent.')
-
-    before_lines = before_lines or {}
-    indent_lines = indent_lines or {}
 
     func_source = _process_function_source(func)
     end_indented, start_indented, before_lines = _process_injected_code(end, start, before_lines)
