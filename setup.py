@@ -10,12 +10,11 @@ setuptools.setup(
     author_email="avivcohn1@gmail.com",
     description="Easily patch functions at runtime.",
     long_description=long_description,
-    long_description_content_type="text/markdown",
     url="https://github.com/AvivC/monki",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-    ],
+    ]
 )

@@ -1,6 +1,5 @@
 import re
 import inspect
-import os
 from types import CodeType, ModuleType
 
 
@@ -167,7 +166,6 @@ def _modify_source(func, start='', end='', before_lines=None, indent_inner=0, in
                       + func_body \
                       + end_indented
 
-    print(modified_source)
     return modified_source
 
 
@@ -273,17 +271,3 @@ def _strip_leading_decorators(source_unindented):
     signature_regex = re.search(_FUNC_SIGNATURE_REGEX, source_unindented)
     sig_start_index = signature_regex.start()
     return source_unindented[sig_start_index:]
-
-
-if __name__ == '__main__':
-    def f():
-        a = 8
-        def g():
-            print(a)
-        return g
-
-    g = f()
-    patch(g, start='print()')
-    g()
-
-
