@@ -1,3 +1,4 @@
+import collections
 import re
 import inspect
 from types import CodeType, ModuleType
@@ -120,8 +121,9 @@ def _modify_closure_function(func, modified_source, throwaway_module):
     func_freevars = func.__code__.co_freevars
     freevars_declarations = '\n    '.join('{} = None'.format(varname) for varname in func_freevars)
 
-    closure_signature, closure_body = _divide_source(modified_source)
-    closure_body = _indent_code(closure_body, indent_level=1)
+    closure_signature, closure_body_lines = _divide_source(modified_source)
+    closure_body_lines = _indent_source_lines(closure_body_lines, indent_level=1)
+    closure_body = '\n'.join(line.code for line in closure_body_lines)
     closure_source = closure_signature + closure_body
 
     wrapper_name = '_wrapper'
@@ -146,37 +148,68 @@ def _create_function_in_inner_module(function_source, module):
         raise ValueError('There\'s a problem with the indentation. Maybe forgot to set indent_inner?') from e
 
 
+_SourceLine = collections.namedtuple('SourceLine', ['code', 'number'])
+
+
 def _modify_source(func, start, end, insert_lines, indent_inner, indent_lines):
     if not any([start, end, insert_lines]):
         raise ValueError('Must supply code to inject or indent.')
 
     func_source = _clean_function_source(func)
-    func_signature, func_body = _divide_source(func_source)
 
-    end, start, insert_lines = _indent_injected_code(end, start, insert_lines)
-    func_body = _process_body(insert_lines, func_body, indent_lines)
+    func_signature, func_body_lines = _divide_source(func_source)
 
     if indent_inner:
-        func_body = _indent_code(func_body, indent_inner)
+        func_body_lines = _indent_source_lines(func_body_lines, indent_inner)
 
-    modified_source = func_signature + start + func_body + end
+    _validate_no_collisions_between_wrappers_and_inserts(end, func_body_lines, insert_lines, start)
+
+    if start:
+        insert_lines[0] = start
+    if end:
+        # if we want to add code at the end, we need a blank line to add the code _before_ of
+        # TODO: Tests seem to pass without this line - figure this out
+        # func_body += '\n\n'
+        # last_line_index = len(func_body.splitlines()) - 1
+        last_line_index = len(func_body_lines)
+        func_body_lines.append(_SourceLine('', last_line_index))
+        insert_lines[last_line_index] = end
+
+    end, start, insert_lines = _indent_injected_code(end, start, insert_lines)
+    func_body = _process_body(insert_lines, func_body_lines, indent_lines)
+
+    # modified_source = func_signature + start + func_body + end
+    modified_source = func_signature + func_body
 
     return modified_source
 
 
-def _process_body(before_lines, func_body, indent_lines):
-    body_lines = list(filter(lambda line: line, func_body.splitlines()))  # remove empty lines
+def _indent_source_lines(func_body_lines, indent_level):
+    return [_SourceLine(_indent_code(line.code, indent_level), line.number)
+            for line in func_body_lines]
+
+
+def _validate_no_collisions_between_wrappers_and_inserts(end, func_body, insert_lines, start):
+    # TODO: Probably refactor to have this in the central validator function
+    if (0 in insert_lines) and start:
+        raise ValueError('Can\'t both insert line at index 0 and set \'start\' argument')
+    if (len(func_body) in insert_lines) and end:
+        raise ValueError('Can\'t both insert line on the last index (+1) and set \'end\' argument')
+
+
+def _process_body(insert_lines, func_body_lines, indent_lines):
+    # body_lines = list(filter(lambda line: line, func_body.splitlines()))  # remove empty lines
     processed_lines = []
 
-    for linenum, line in enumerate(body_lines):
+    for line, linenum in func_body_lines:
         indent_line = linenum in indent_lines
         if indent_line:
             indent_level = indent_lines[linenum]
             line = _indent_code(line, indent_level)
 
-        inject_line = linenum in before_lines
+        inject_line = linenum in insert_lines
         if inject_line:
-            line_to_inject = before_lines[linenum]
+            line_to_inject = insert_lines[linenum]
             processed_lines.append(line_to_inject)
 
         processed_lines.append(line)
@@ -192,14 +225,18 @@ def _divide_source(func_source):
 
     func_signature = func_source[:func_sig_end_index]
     if func_signature[-1].isspace():
-        raise RuntimeError('This shouldn\'t happen - the regex should never return a signature ending with whitespace.')
-
-    func_body = func_source[func_sig_end_index:].strip('\n')
+        raise AssertionError('This shouldn\'t happen - the regex should never return a signature ending with whitespace.')
 
     func_signature = func_signature + '\n'
-    func_body = '\n' + func_body + '\n'
 
-    return func_signature, func_body
+    func_body = func_source[func_sig_end_index:].strip('\n')
+    # func_body = '\n' + func_body + '\n'
+    func_body = func_body
+    body_lines = [_SourceLine(code, linenum) for linenum, code in enumerate(func_body.splitlines())]
+
+    return func_signature, body_lines
+    # return func_signature, '\n'.join(line.code for line in body_lines)
+    # return func_signature, func_body
 
 
 def _indent_injected_code(end, start, insert_lines):
