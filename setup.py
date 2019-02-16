@@ -21,5 +21,6 @@ setup(
         "Operating System :: OS Independent"
     ],
     packages=["monki"],
+    keywords="monkey patching utility programming development",
     include_package_data=True
 )
