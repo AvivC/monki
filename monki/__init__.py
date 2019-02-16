@@ -1,1 +1,1 @@
-from .core import extend_function
+from .core import patch

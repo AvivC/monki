@@ -8,16 +8,32 @@ _FUNC_SIGNATURE_REGEX = r'def (\w+)\s*\(((\s|.)*?)\)\s*:'
 _INDENT_STRING = '    '
 
 
-def extend_function(func, start='', end='', before_lines=None, indent_inner=False):
+def patch(func, start='', end='', insert=None, indent_lines=None, indent_inner=False):
+    indent_inner, indent_lines, insert_lines = _validate_arguments(indent_inner, indent_lines, insert)
+    modified_source = _modify_source(func, start, end, insert_lines, indent_inner, indent_lines)
+    _replace_code(func, modified_source)
+
+
+def _validate_arguments(indent_inner, indent_lines, insert):
     if indent_inner is True:
         indent_inner = 1
     elif indent_inner is False:
         indent_inner = 0
+    elif not (isinstance(indent_inner, int) and indent_inner >= 0):
+        raise TypeError('indent_inner must be a boolean or a positive integer, to represent indentation level.')
 
-    before_lines = before_lines or {}
+    if isinstance(indent_lines, list):
+        dict_indent_lines = {line_num: 1 for line_num in indent_lines}
+    elif isinstance(indent_lines, dict):
+        dict_indent_lines = indent_lines
+    elif indent_lines is None:
+        dict_indent_lines = {}
+    else:
+        raise TypeError('indent_lines must be a list of lines to indent or a dict of line_number => indent_level')
 
-    modified_source = _modify_source(func, start, end, before_lines, indent_inner)
-    _replace_code(func, modified_source)
+    insert = insert or {}
+
+    return indent_inner, dict_indent_lines, insert
 
 
 def _replace_code(func, modified_source):
@@ -51,7 +67,7 @@ def _modify_closure_function(func, modified_source, throwaway_module):
     freevars_declarations = '\n    '.join('{} = None'.format(varname) for varname in func_freevars)
 
     closure_signature, closure_body = _divide_source(modified_source)
-    closure_body = _indent_lines(closure_body, indent_level=1, indent_string=_INDENT_STRING)
+    closure_body = _indent_code(closure_body, indent_level=1, indent_string=_INDENT_STRING)
     closure_source = closure_signature + closure_body
 
     wrapper_name = '_wrapper'
@@ -76,19 +92,20 @@ def _create_function_in_inner_module(function_source, module):
         raise ValueError('There\'s a problem with the indentation. Maybe forgot to set indent_inner?') from e
 
 
-def _modify_source(func, start='', end='', before_lines=None, indent_inner=0):
+def _modify_source(func, start='', end='', before_lines=None, indent_inner=0, indent_lines=None):
     if not any([start, end, before_lines]):
-        raise ValueError('Must supply code to inject.')
+        raise ValueError('Must supply code to inject or indent.')
 
     before_lines = before_lines or {}
+    indent_lines = indent_lines or {}
 
     func_source = _process_function_source(func)
     end_indented, start_indented, before_lines = _process_injected_code(end, start, before_lines)
     func_signature, func_body = _divide_source(func_source)
-    func_body = _inject_lines(before_lines, func_body)
+    func_body = _process_body(before_lines, func_body, indent_lines)
 
     if indent_inner:
-        func_body = _indent_lines(func_body, indent_inner, _INDENT_STRING)
+        func_body = _indent_code(func_body, indent_inner, _INDENT_STRING)
 
     modified_source = func_signature \
                       + start_indented \
@@ -99,18 +116,25 @@ def _modify_source(func, start='', end='', before_lines=None, indent_inner=0):
     return modified_source
 
 
-def _inject_lines(before_lines, func_body):
+def _process_body(before_lines, func_body, indent_lines):
     body_lines = list(filter(lambda line: line, func_body.splitlines()))  # remove empty lines
-    body_lines_with_injection = []
+    processed_lines = []
 
     for linenum, line in enumerate(body_lines):
-        if linenum in before_lines:
-            line_to_inject = before_lines[linenum]
-            body_lines_with_injection.append(line_to_inject)
-        body_lines_with_injection.append(line)
+        indent_line = linenum in indent_lines
+        if indent_line:
+            indent_level = indent_lines[linenum]
+            line = _indent_code(line, indent_level, _INDENT_STRING)
 
-    func_body = '\n'.join(body_lines_with_injection)
-    # func_body = os.linesep.join(body_lines_with_injection)
+        inject_line = linenum in before_lines
+        if inject_line:
+            line_to_inject = before_lines[linenum]
+            processed_lines.append(line_to_inject)
+
+        processed_lines.append(line)
+
+    func_body = '\n'.join(processed_lines)
+    # func_body = os.linesep.join(processed_lines)
     return func_body
 
 
@@ -157,7 +181,7 @@ def _process_function_source(func):
     return func_source
 
 
-def _indent_lines(code, indent_level, indent_string):
+def _indent_code(code, indent_level, indent_string):
     relative_indent_string = indent_level * indent_string
     return relative_indent_string + ('\n' + relative_indent_string).join(code.splitlines())
 
@@ -204,7 +228,7 @@ if __name__ == '__main__':
         return g
 
     g = f()
-    extend_function(g, start='print()')
+    patch(g, start='print()')
     g()
 
 

@@ -21,7 +21,7 @@ def typecheck(func):
                            .format(arg_name=arg_name, arg_type=arg_type.__name__))
     checks = '\n'.join(check_lines)
 
-    core.extend_function(func, start=checks)
+    core.patch(func, start=checks)
     return func
 
 
@@ -29,9 +29,9 @@ def ignoreerror(error):
     code_for_error = _error_to_python_code(error)
 
     def dec(func):
-        core.extend_function(func,
-                             start='try:',
-                             end='except {error}: pass'.format(error=code_for_error), indent_inner=1)
+        core.patch(func,
+                   start='try:',
+                   end='except {error}: pass'.format(error=code_for_error), indent_inner=1)
         return func
 
     return dec
