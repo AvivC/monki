@@ -6,7 +6,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="monki",
-    version="0.1.0",
+    version="0.1.1",
     description="Patch functions at runtime, the easy way.",
     long_description=README,
     long_description_content_type="text/markdown",
