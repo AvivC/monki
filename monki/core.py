@@ -8,8 +8,63 @@ _FUNC_SIGNATURE_REGEX = r'def (\w+)\s*\(((\s|.)*?)\)\s*:'
 _INDENT_STRING = '    '
 
 
-def patch(func, start='', end='', insert=None, indent_lines=None, indent_inner=False):
-    indent_inner, indent_lines, insert_lines = _validate_arguments(indent_inner, indent_lines, insert)
+def patch(func, start='', end='', insert_lines=None, indent_lines=None, indent_inner=False):
+    """
+    Easily modify a function's code at runtime.
+    Can be called at most once on a single function.
+
+    Consider we want to patch the following function:
+
+    def func():
+        print('First')   # line 0
+        print('Second')  # line 1
+        print('Third')   # line 2
+
+    Examples of different ways to patch it:
+
+        # Wrap the function with start and end code
+        monki.patch(func, start="print('Starting')", end="print('Ending')")
+        func()
+            >>> 'Starting'
+            >>> 'First'
+            >>> 'Second'
+            >>> 'Third'
+            >>> 'Ending'
+
+        # Inject lines at any offset
+        monki.patch(func, insert={1: "print('Injected line')", 2: "print('Another injection')"})
+        func()
+            >>> 'First'
+            >>> 'Injected line'
+            >>> 'Second'
+            >>> 'Another injection'
+            >>> 'Third'
+
+        # Indent existing lines. Let's use that along with injection in order to create a loop!
+        # This injects the `for` before line 1, and indents line 1 so it's inside the loop.
+        monki.patch(func, insert={1: "for i in range(3):"}, indent_lines=[1])
+        func()
+            >>> 'First'
+            >>> 'Second'
+            >>> 'Second'
+            >>> 'Second'
+            >>> 'Third'
+
+    :param func: The function to patch.
+    :param start: Code to inject in the beginning, right after the signature.
+    :param end: Code to inject as the last line of the function.
+    :param insert_lines:
+        A dict of line number => code to inject.
+        The code will be injected before the line number in the original code.
+    :param indent_lines:
+        A list of line numbers or a dictionary of line number => indent level.
+        Used to indent specific lines.
+    :param indent_inner:
+        An int to indicate indentation level or a boolean (True is indent level of 1).
+        Indents all of the original code inside the function
+    """
+
+    indent_inner, indent_lines, insert_lines = _validate_arguments(indent_inner, indent_lines, insert_lines)
     modified_source = _modify_source(func, start, end, insert_lines, indent_inner, indent_lines)
     _replace_code(func, modified_source)
 
