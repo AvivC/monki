@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="monki",
-    version="v0.1.0-alpha",
+    version="0.1.0",
     license='MIT',
     author="Aviv Cohn",
     author_email="avivcohn1@gmail.com",
