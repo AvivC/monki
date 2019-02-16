@@ -17,6 +17,8 @@ We want to patch the following function:
 
 Different ways to patch it:
 
+    import monki
+
     # Add code at beginning or end
     
     monki.patch(func, start="print('Starting')", end="print('Ending')")
