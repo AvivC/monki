@@ -5,10 +5,11 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="monki",
-    version="0.1.0",
+    version="v0.1.0-alpha",
+    license='MIT',
     author="Aviv Cohn",
     author_email="avivcohn1@gmail.com",
-    description="Easily patch functions at runtime.",
+    description="Patch functions at runtime - super easily.",
     long_description=long_description,
     url="https://github.com/AvivC/monki",
     packages=setuptools.find_packages(),
