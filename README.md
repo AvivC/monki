@@ -1,6 +1,6 @@
 # Monki
 
-Easily patch functions at runtime.
+Patch functions at runtime, the easy way.
 
 ## Installation
 
