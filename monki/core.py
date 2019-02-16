@@ -121,7 +121,7 @@ def _modify_closure_function(func, modified_source, throwaway_module):
     freevars_declarations = '\n    '.join('{} = None'.format(varname) for varname in func_freevars)
 
     closure_signature, closure_body = _divide_source(modified_source)
-    closure_body = _indent_code(closure_body, indent_level=1, indent_string=_INDENT_STRING)
+    closure_body = _indent_code(closure_body, indent_level=1)
     closure_source = closure_signature + closure_body
 
     wrapper_name = '_wrapper'
@@ -146,22 +146,20 @@ def _create_function_in_inner_module(function_source, module):
         raise ValueError('There\'s a problem with the indentation. Maybe forgot to set indent_inner?') from e
 
 
-def _modify_source(func, start, end, before_lines, indent_inner, indent_lines):
-    if not any([start, end, before_lines]):
+def _modify_source(func, start, end, insert_lines, indent_inner, indent_lines):
+    if not any([start, end, insert_lines]):
         raise ValueError('Must supply code to inject or indent.')
 
-    func_source = _process_function_source(func)
-    end_indented, start_indented, before_lines = _process_injected_code(end, start, before_lines)
+    func_source = _clean_function_source(func)
     func_signature, func_body = _divide_source(func_source)
-    func_body = _process_body(before_lines, func_body, indent_lines)
+
+    end, start, insert_lines = _indent_injected_code(end, start, insert_lines)
+    func_body = _process_body(insert_lines, func_body, indent_lines)
 
     if indent_inner:
-        func_body = _indent_code(func_body, indent_inner, _INDENT_STRING)
+        func_body = _indent_code(func_body, indent_inner)
 
-    modified_source = func_signature \
-                      + start_indented \
-                      + func_body \
-                      + end_indented
+    modified_source = func_signature + start + func_body + end
 
     return modified_source
 
@@ -174,7 +172,7 @@ def _process_body(before_lines, func_body, indent_lines):
         indent_line = linenum in indent_lines
         if indent_line:
             indent_level = indent_lines[linenum]
-            line = _indent_code(line, indent_level, _INDENT_STRING)
+            line = _indent_code(line, indent_level)
 
         inject_line = linenum in before_lines
         if inject_line:
@@ -204,36 +202,36 @@ def _divide_source(func_source):
     return func_signature, func_body
 
 
-def _process_injected_code(end, start, before_lines):
+def _indent_injected_code(end, start, insert_lines):
     # added code will always have an indentation level of 1 - immediately under the function
-    start_indented = _indent_injected_code(start)
-    end_indented = _indent_injected_code(end)
-    before_lines = {linenum: _indent_injected_code(code) for linenum, code in before_lines.items()}
+    start_indented = _indent_code(start, indent_level=1)
+    end_indented = _indent_code(end, indent_level=1)
+    insert_lines = {linenum: _indent_code(code, indent_level=1) for linenum, code in insert_lines.items()}
 
-    return end_indented, start_indented, before_lines
-
-
-def _indent_injected_code(start):
-    # TODO: probably pretty much the same code and _indent_lines, consider merging the two
-    if start:
-        start_indented = '\n'
-        start_indented += _INDENT_STRING + ('\n' + _INDENT_STRING).join(start.splitlines())
-        start_indented += '\n'
-    else:
-        start_indented = start
-    return start_indented
+    return end_indented, start_indented, insert_lines
 
 
-def _process_function_source(func):
+# def _indent_line(code):
+#     # TODO: probably pretty much the same code and _indent_lines, consider merging the two
+#     if code:
+#         start_indented = '\n'
+#         start_indented += _INDENT_STRING + ('\n' + _INDENT_STRING).join(code.splitlines())
+#         start_indented += '\n'
+#     else:
+#         start_indented = code
+#     return start_indented
+
+
+def _clean_function_source(func):
     func_source = inspect.getsource(func)
     func_source = _unindent_source(func_source)
     func_source = _strip_leading_decorators(func_source)
     return func_source
 
 
-def _indent_code(code, indent_level, indent_string):
-    relative_indent_string = indent_level * indent_string
-    return relative_indent_string + ('\n' + relative_indent_string).join(code.splitlines())
+def _indent_code(code, indent_level):
+    relative_indent_string = indent_level * _INDENT_STRING
+    return '\n' + relative_indent_string + ('\n' + relative_indent_string).join(code.splitlines()) + '\n'
 
 
 def _unindent_source(func_source):

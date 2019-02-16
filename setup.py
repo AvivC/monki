@@ -7,7 +7,7 @@ README = (HERE / "README.md").read_text()
 setup(
     name="monki",
     version="0.1.0",
-    description="Easily patch functions at runtime.",
+    description="Patch functions at runtime, the easy way.",
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/avivc/monki",
