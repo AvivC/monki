@@ -1,6 +1,6 @@
 import pytest
 
-from modipy.enhancers import typecheck, ignoreerror
+from monki.enhancers import typecheck, ignoreerror
 
 
 def test_typecheck_doesnt_raise_when_all_args_correct():

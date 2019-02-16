@@ -1,22 +1,22 @@
-import itertools
 import re
-import types
-
-from types import CodeType, ModuleType
 import inspect
+import os
+from types import CodeType, ModuleType
 
 
 _FUNC_SIGNATURE_REGEX = r'def (\w+)\s*\(((\s|.)*?)\)\s*:'
 _INDENT_STRING = '    '
 
 
-def extend_function(func, start='', end='', indent_inner=False):
+def extend_function(func, start='', end='', before_lines=None, indent_inner=False):
     if indent_inner is True:
         indent_inner = 1
     elif indent_inner is False:
         indent_inner = 0
 
-    modified_source = _modify_source(func, start, end, indent_inner)
+    before_lines = before_lines or {}
+
+    modified_source = _modify_source(func, start, end, before_lines, indent_inner)
     _replace_code(func, modified_source)
 
 
@@ -76,16 +76,19 @@ def _create_function_in_inner_module(function_source, module):
         raise ValueError('There\'s a problem with the indentation. Maybe forgot to set indent_inner?') from e
 
 
-def _modify_source(func, start='', end='', indent=0):
-    if not start and not end:
-        raise ValueError('Must supply code for at least one of "start" or "end" arguments.')
+def _modify_source(func, start='', end='', before_lines=None, indent_inner=0):
+    if not any([start, end, before_lines]):
+        raise ValueError('Must supply code to inject.')
+
+    before_lines = before_lines or {}
 
     func_source = _process_function_source(func)
-    end_indented, start_indented = _process_wrapping_code(end, start)
+    end_indented, start_indented, before_lines = _process_injected_code(end, start, before_lines)
     func_signature, func_body = _divide_source(func_source)
+    func_body = _inject_lines(before_lines, func_body)
 
-    if indent:
-        func_body = _indent_lines(func_body, indent, _INDENT_STRING)
+    if indent_inner:
+        func_body = _indent_lines(func_body, indent_inner, _INDENT_STRING)
 
     modified_source = func_signature \
                       + start_indented \
@@ -94,6 +97,21 @@ def _modify_source(func, start='', end='', indent=0):
 
     print(modified_source)
     return modified_source
+
+
+def _inject_lines(before_lines, func_body):
+    body_lines = list(filter(lambda line: line, func_body.splitlines()))  # remove empty lines
+    body_lines_with_injection = []
+
+    for linenum, line in enumerate(body_lines):
+        if linenum in before_lines:
+            line_to_inject = before_lines[linenum]
+            body_lines_with_injection.append(line_to_inject)
+        body_lines_with_injection.append(line)
+
+    func_body = '\n'.join(body_lines_with_injection)
+    # func_body = os.linesep.join(body_lines_with_injection)
+    return func_body
 
 
 def _divide_source(func_source):
@@ -112,23 +130,24 @@ def _divide_source(func_source):
     return func_signature, func_body
 
 
-def _process_wrapping_code(end, start):
+def _process_injected_code(end, start, before_lines):
     # added code will always have an indentation level of 1 - immediately under the function
+    start_indented = _indent_injected_code(start)
+    end_indented = _indent_injected_code(end)
+    before_lines = {linenum: _indent_injected_code(code) for linenum, code in before_lines.items()}
+
+    return end_indented, start_indented, before_lines
+
+
+def _indent_injected_code(start):
+    # TODO: probably pretty much the same code and _indent_lines, consider merging the two
     if start:
         start_indented = '\n'
         start_indented += _INDENT_STRING + ('\n' + _INDENT_STRING).join(start.splitlines())
         start_indented += '\n'
     else:
         start_indented = start
-
-    if end:
-        end_indented = '\n'
-        end_indented += _INDENT_STRING + ('\n' + _INDENT_STRING).join(end.splitlines())
-        end_indented += '\n'
-    else:
-        end_indented = end
-
-    return end_indented, start_indented
+    return start_indented
 
 
 def _process_function_source(func):
